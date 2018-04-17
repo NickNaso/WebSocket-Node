@@ -5,18 +5,10 @@
  * MIT Licensed
  */
 
-#include <v8.h>
-#include <node.h>
-#include <node_version.h>
-#include <node_buffer.h>
-#include <node_object_wrap.h>
 #include <stdlib.h>
 #include <wchar.h>
 #include <stdio.h>
-#include "nan.h"
-
-using namespace v8;
-using namespace node;
+#include "validation.h"
 
 #define UNI_SUR_HIGH_START   (uint32_t) 0xD800
 #define UNI_SUR_LOW_END    (uint32_t) 0xDFFF
@@ -101,48 +93,36 @@ int is_valid_utf8 (size_t len, char *value)
   return 1;
 }
 
-class Validation : public ObjectWrap
-{
-public:
+Napi::FunctionReference Validation::constructor;
 
-  static void Initialize(v8::Handle<v8::Object> target)
-  {
-    Nan::HandleScope scope;
-    Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(New);
-    t->InstanceTemplate()->SetInternalFieldCount(1);
-    Nan::SetMethod(t, "isValidUTF8", Validation::IsValidUTF8);
-    Nan::Set(target, Nan::New<String>("Validation").ToLocalChecked(), t->GetFunction());
-  }
-
-protected:
-
-  static NAN_METHOD(New)
-  {
-    Nan::HandleScope scope;
-    Validation* validation = new Validation();
-    validation->Wrap(info.This());
-    info.GetReturnValue().Set(info.This());
-  }
-
-  static NAN_METHOD(IsValidUTF8)
-  {
-    Nan::HandleScope scope;
-    if (!Buffer::HasInstance(info[0])) {
-      return Nan::ThrowTypeError("First argument needs to be a buffer");
-    }
-    Local<Object> buffer_obj = info[0]->ToObject();
-    char *buffer_data = Buffer::Data(buffer_obj);
-    size_t buffer_length = Buffer::Length(buffer_obj);
-    info.GetReturnValue().Set(is_valid_utf8(buffer_length, buffer_data) == 1 ? Nan::True() : Nan::False());
-  }
-};
-#if !NODE_VERSION_AT_LEAST(0,10,0)
-extern "C"
-#endif
-void init (Handle<Object> target)
-{
-  Nan::HandleScope scope;
-  Validation::Initialize(target);
+Napi::Object Validation::Initialize(Napi::Env env, Napi::Object exports) {
+  Napi::HandleScope scope(env);
+  Napi::Function func = DefineClass(env, "Validation", {
+    InstanceMethod("isValidUTF8", &Validation::IsValidUTF8)
+  })
+  constructor = Napi::Persistent(func);
+  constructor.SuppressDestruct();
+  exports.Set("Validation", func);
+  return exports;
 }
 
-NODE_MODULE(validation, init)
+Validation::Validation(const Napi::CallbackInfo& info) 
+  : Napi::ObjectWrap<Validation>(info) {
+    // NOOP
+}
+
+Napi::Value Validation::IsValidUTF8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!info[0].IsBuffer()) {
+    throw Napi::TypeError::New(env, "First argument needs to be a buffer");
+  }
+  Napi::Buffer<char> buffer = info[0].As<Napi::Buffer<char>>();
+  return Napi::Boolean::New(env, is_valid_utf8(buffer.Length(), buffer.Data() == 1 ? true : false));
+}
+
+Napi::Object init(Napi::Env env, Napi::Object exports) {
+  Validation::Initialize(env, exports);
+  return exports
+}
+
+NODE_API_MODULE(validation, init)
