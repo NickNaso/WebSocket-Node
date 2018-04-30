@@ -99,7 +99,7 @@ Napi::Object Validation::Initialize(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
   Napi::Function func = DefineClass(env, "Validation", {
     InstanceMethod("isValidUTF8", &Validation::IsValidUTF8)
-  })
+  });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("Validation", func);
@@ -117,12 +117,12 @@ Napi::Value Validation::IsValidUTF8(const Napi::CallbackInfo& info) {
     throw Napi::TypeError::New(env, "First argument needs to be a buffer");
   }
   Napi::Buffer<char> buffer = info[0].As<Napi::Buffer<char>>();
-  return Napi::Boolean::New(env, is_valid_utf8(buffer.Length(), buffer.Data() == 1 ? true : false));
+  return Napi::Boolean::New(env, is_valid_utf8(buffer.Length(), buffer.Data()) == 1 ? true : false);
 }
 
 Napi::Object init(Napi::Env env, Napi::Object exports) {
   Validation::Initialize(env, exports);
-  return exports
+  return exports;
 }
 
 NODE_API_MODULE(validation, init)

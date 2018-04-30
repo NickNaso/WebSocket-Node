@@ -2,18 +2,11 @@
   'targets': [
     {
       'target_name': 'validation',
-      'include_dirs': [
-        "<!@(node -p \"require('node-addon-api').include\")"
-      ],
-      'dependencies': [
-        "<!(node -p \"require('node-addon-api').gyp\")"
-      ]
-      'cflags_cc!': [ '-fno-exceptions' ],
-      'cflags!': [ 
-        '-O3',
-         '-fno-exceptions'
-      ],
+      'include_dirs': ["<!@(node -p \"require('node-addon-api').include\")"],
+      'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],
+      'cflags!': [ '-O3', '-fno-exceptions'],
       'cflags': [ '-O2' ],
+      'cflags_cc!': [ '-fno-exceptions' ],
       'sources': [ 'src/validation.cc' ],
       'conditions': [
         ['OS=="win"', {
@@ -34,15 +27,11 @@
     },
     {
       'target_name': 'bufferutil',
-      'include_dirs': [
-        "<!@(node -p \"require('node-addon-api').include\")"
-      ],
-      'cflags_cc!': [ '-fno-exceptions' ],
-      'cflags!': [ 
-        '-O3',
-         '-fno-exceptions'
-      ],
+      'include_dirs': ["<!@(node -p \"require('node-addon-api').include\")"],
+      'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],
+      'cflags!': [ '-O3', '-fno-exceptions'],
       'cflags': [ '-O2' ],
+      'cflags_cc!': [ '-fno-exceptions' ],
       'sources': [ 'src/bufferutil.cc' ],
       'conditions': [
         ['OS=="win"', {
@@ -61,5 +50,5 @@
         }]
       ]
     }
-  ]
+  ]   
 }
